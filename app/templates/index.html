@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>控制后端</title>
+            <!--<script src="Semantic-UI/semantic.min.js"></script>-->
+    <!--<script src="Semantic-UI/semantic.min.css"></script>-->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='Semantic-UI/semantic.css') }}">
+    <script src="{{ url_for('static',filename='Semantic-UI/semantic.css') }}"></script>
+
+    <script src="{{ url_for('static',filename='jquery.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='vue.js') }}"></script>
+</head>
+<body>
+
+
+    <div class="ui aligned segment">
+        <div class="ui inverted menu">
+            <div class="ui inverted vertical aligned segment">
+                <div class="ui container">
+                    <h1 class="ui text">
+                        上传文件
+                    </h1>
+                    <p>
+                        不知道为什么标题没有在正中间。
+                        注意，只能上传csv文件，其它什么文件通通都不支持，一律报错，而且会缓存在我的电脑里！！！
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="ui aligned segment">
+            <div class="ui aligned segment">
+                <form id="tf">
+                    <input class="ui button" type="file" name="img" id="FileUpload" />
+                    <div class="ui input">
+                        <input class="ui " type="text" name="username" />
+                    </div>
+                    <input type="button" class="ui button" value="提交" v-on:click="test2"/>
+                </form>
+            </div>
+            <div class="ui segments">
+                <div id="app" class="ui segment">
+                    <h2 class="ui segment">
+                        插入的前5个内容是：
+                    </h2>
+                    <div class="ui seven column grid">
+                        <div class="ui column">日期(date)</div>
+                        <div class="ui column">name</div>
+                        <div class="ui column">area</div>
+                        <div class="ui column">department</div>
+                        <div class="ui column">label</div>
+                        <div class="ui column">url</div>
+                        <div class="ui column">content</div>
+                    </div>
+                    <div v-for="onerow in csv_result" class="ui segment">
+                        <div class="ui seven column grid">
+                            <div class="row">
+                                <div class="ui column" v-for ="onecolum in onerow" v-text="onecolum">
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <div class="ui container"></div>
+        <script>
+                        var app2 = new Vue({
+                el: '#tf',
+                data :{},
+                methods:{
+                    test2 : function () {
+                            var form = new FormData();
+                            var files = document.getElementById("FileUpload").files;
+                            for (var i=0;i<files.length;i++)
+                            form.append("file",files[i]);
+
+                            $.ajax({
+                                url:"/uploadfile",
+                                type:"post",
+                                data:form,
+                                processData:false,
+                                contentType:false,
+                                success:function(data){
+                                    alert("sucessde");
+                                    var data1;
+                                    data1 = data;
+                                    app.csv_result=eval(data);
+                                },
+                                error:function(e){
+                                    alert("错误！！");
+                                    }
+                                })},
+                }
+            });
+        </script>
+        <script>
+            var app = new Vue({
+                  el: '#app',
+                  data: {
+                      message: 'Hello Vue!',
+                      csv_result: [
+                            ],
+                  },
+                  methods:{
+                      result1:function (data) {
+                            return this.message;
+                      },
+                  }
+                });
+
+        </script>
+
+    </div>
+
+</body>
+</html>

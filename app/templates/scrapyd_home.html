@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>爬虫控制后台</title>
+        <script src="{{ url_for('static',filename='jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='Semantic-UI/semantic.min.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='Semantic-UI/semantic.min.css') }}">
+        <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+        <script src="{{ url_for('static',filename='echarts.min.js') }}"></script>
+
+</head>
+<body>
+    <div class="ui inverted menu">
+        <div class="ui item button" href="#">
+            服务器状态
+        </div>
+        <div class="ui item button" href="#">
+            爬虫状态
+        </div>
+        <div class="ui item button" href="#">
+            其他信息
+        </div>
+    </div>
+    <div class="ui divider"></div>
+    <div class="ui container">
+        <div class="ui container" id="cpu_info">
+            <div class="ui four cards">
+                <div class="ui card">
+                    <div class="image dimmable">
+
+                    </div>
+                    <div class="content">
+                        CPU信息
+                    </div>
+                    <div class="external content">
+                            <div class="ui item">空闲率：{[ message["cpu_info"][3] ]}%</div>
+                            <div class="ui item">用户占用:{[ message["cpu_info"][0] ]}%</div>
+                            <div class="ui item">系统占用:{[ message["cpu_info"][1] ]}%</div>
+                            <div class="ui item">其他(ni,wa,hi,si):{[ message["cpu_info"][2] ]}%,{[ message["cpu_info"][4] ]}%,{[ message["cpu_info"][5] ]}%,{[ message["cpu_info"][6] ]}%</div>
+                            <div class="ui item"> .</div>
+
+
+                    </div>
+                </div>
+                <div class="ui card">
+                    <div class="image dimmable">
+
+                    </div>
+                    <div class="content">
+                        内存({[ message["men_info"][0] ]})M
+                    </div>
+                    <div class="external content">
+                        <div class="ui item">未使用：{[ message["men_info"][1] ]}Mb</div>
+                        <div class="ui item">已使用：{[ message["men_info"][2] ]}Mb</div>
+                        <div class="ui item">交换区：{[ message["men_info"][3] ]}Mb</div>
+                        <div class="ui item"> .</div>
+                        <div class="ui item"> .</div>
+
+
+                    </div>
+                </div>
+
+                <div class="ui card">
+                    <div class="image dimmable">
+
+                    </div>
+                    <div class="content">
+                        服务器任务
+                    </div>
+                    <div class="external content">
+                        <div class="ui item">总进程数：{[ message["task_info"][0] ]}</div>
+                        <div class="ui item">正在运行：{[ message["task_info"][1] ]}</div>
+                        <div class="ui item">休眠中：{[ message["task_info"][2] ]}</div>
+                        <div class="ui item">已停止：{[ message["task_info"][3] ]}</div>
+                        <div class="ui item">僵尸进程：{[ message["task_info"][4] ]}</div>
+                    </div>
+                </div>
+                <div class="ui card">
+                    <div class="image dimmable">
+
+                    </div>
+                    <div class="content">
+                        硬盘
+                    </div>
+                    <div class="external content">
+                        <div class="ui item"> .</div>
+                        <div class="ui item"> .</div>
+                        <div class="ui item"> .</div>
+                        <div class="ui item"> .</div>
+                        <div class="ui item"> .</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            var app = new Vue({
+                delimiters :["{[","]}"],
+                el: "#cpu_info",
+                data : {
+                    message:{
+                        "chache_info":["4194300", "4194300", "0", "4336188"],
+                        "cpu_info":["7.5", "2.0", "0.0", "89.6", "0.9", "0.0", "0.0", "0.0"],
+                        "loadaverge_info": ["1", "1.25", "1.22", "0.84"],
+                        "men_info":["8116624", "1686652", "3405900", "3024072"],
+                        "task_info":[]
+                    },
+                    isthefirst:1,
+                    message2:{},
+                },
+                methods: {
+                    loaddata:function () {
+
+                        var ws = new WebSocket("ws://localhost:8844");
+
+                        ws.onopen = function () {
+{#                            alert("ws is sending data");#}
+                            ws.send("发送数据");
+                            app.isthefirst = 0;
+                            function senddata() {
+                                ws.send("secned");
+                            };
+                            setInterval(senddata,2000);
+                        };
+                        ws.onmessage = function (evt) {
+{#                            if not d{}#}
+                            var data= eval("("+evt.data+")");
+                            var men1 = data["men_info"];
+                            var men2 = new Array();
+                            for(var i=0;i<men1.length;i++){
+                                men2.push(Math.ceil(men1[i]/1024));
+                            };
+                            data["men_info"] = men2;
+                            app.message=data;
+
+
+
+                        };
+                        ws.onclose = function () {
+                            alert("ws has closed");
+                        };
+                    }
+                },
+                mounted : function () {
+                    this.loaddata();
+                }
+
+            })
+        </script>
+    </div>
+    <div class="ui divider"></div>
+
+    <div id="chart1" style="width: auto;height:400px;">
+    </div>
+    <script>
+        var myChart = echarts.init(document.getElementById('chart1'));
+        var base = +new Date(1968, 9, 3);
+        var oneDay = 24 * 3600 * 1000;
+        var date = [];
+
+        var data = [Math.random() * 300];
+
+        for (var i = 1; i < 20000; i++) {
+        var now = new Date(base += oneDay);
+        date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('/'));
+        data.push(Math.round((Math.random() - 0.5) * 20 + data[i - 1]));
+        }
+
+        option = {
+        tooltip: {
+            trigger: 'axis',
+            position: function (pt) {
+                return [pt[0], '10%'];
+            }
+        },
+        title: {
+            left: 'center',
+            text: '大数据量面积图',
+        },
+        toolbox: {
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: date
+        },
+        yAxis: {
+            type: 'value',
+            boundaryGap: [0, '100%']
+        },
+        dataZoom: [{
+            type: 'inside',
+            start: 0,
+            end: 10
+        }, {
+            start: 0,
+            end: 10,
+            handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+            handleSize: '80%',
+            handleStyle: {
+                color: '#fff',
+                shadowBlur: 3,
+                shadowColor: 'rgba(0, 0, 0, 0.6)',
+                shadowOffsetX: 2,
+                shadowOffsetY: 2
+            }
+        }],
+        series: [
+            {
+                name:'模拟数据',
+                type:'line',
+                smooth:true,
+                symbol: 'none',
+                sampling: 'average',
+                itemStyle: {
+                    normal: {
+                        color: 'rgb(20, 70, 131)'
+                    }
+                },
+                areaStyle: {
+                    normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: 'rgb(255, 240, 240)'
+                        }, {
+                            offset: 1,
+                            color: 'rgb(240, 240, 230)'
+                        }])
+                    }
+                },
+                data: data
+            }
+        ]
+        };
+
+        myChart.setOption(option);
+
+    </script>
+
+</body>
+</html>
